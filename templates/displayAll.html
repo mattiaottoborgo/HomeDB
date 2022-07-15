@@ -1,0 +1,27 @@
+<html>
+<title>
+{{title}}
+</title>
+<body>
+    <h1 align="center">{{title}}</h1>
+    <table align="center">
+        <tr>
+            {%for element in columns%}
+
+            <td>{{element}}</td>
+            {%endfor%}
+        </tr>
+        {%for row in table%}
+        <tr>
+            {%for field in row%}
+            <td>{{field}}</td>
+            {%endfor%}
+        </tr>
+        {%endfor%}
+
+    </table>
+    <form action="/" class="inline" >
+        <p align="center"><button class="float-left submit-button" >return Home</button></p>
+    </form>
+</body>
+</html>
