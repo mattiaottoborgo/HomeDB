@@ -10,7 +10,7 @@
             <tr><td><input type="text" name ="Position"></td></tr>
 
             <tr><td>Stanza</td></tr>
-            <tr><td><select name ="RoomID">
+            <tr><td><select name  ="RoomID" id="selectRoomID">
                 <option value="-1"selected disabled hidden>Select a Room</option>
                 {% for row in results[0] %}
                     <option value ="{{row['RoomID']}}">{{row['RoomID']}} - {{row['RoomName']}}</option>
@@ -22,7 +22,6 @@
         <input type="submit" value="Send">
 </form>
 </body>
-
 
 
 

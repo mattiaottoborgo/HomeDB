@@ -2,6 +2,7 @@ from urllib.robotparser import RequestRate
 from flask import Flask, redirect, render_template, request
 import sqlalchemy
 from sqlalchemy.exc import SQLAlchemyError
+import json
 from sqlalchemy import create_engine
 app = Flask(__name__)
 dialect = "mysql"
@@ -10,6 +11,30 @@ psw = ""
 host="127.0.0.1"
 dbname = "HomeDB"
 engine = create_engine(f"{dialect}://{username}:{psw}@{host}/{dbname}")
+
+
+def load_insert_box():
+    query_list=[]
+    page="insertBox.html"
+    query="SELECT RoomID,RoomName from Room"
+    query_list.append(query)
+    return page,query_list
+def load_insert_object():
+    page="insertObject.html"
+    query_list=[]
+    query= "SELECT ObjectId,ObjectName from Objects"
+    query_list.append(query)
+    query="SELECT ROOMID, COUNT(DISTINCT BOXID)\
+           FROM BOXES\
+           GROUP BY ROOMID"
+    query_list.append(query)
+    query="SELECT RoomID,RoomName from Room"
+    query_list.append(query)
+    return page,query_list
+
+
+
+
 @app.route("/")
 def index():    
     try:
@@ -123,36 +148,27 @@ def insertRoom():
 @app.route("/selectAction",methods=["GET","POST"])
 def selectAct():
     page=""
+    query=""
+    query_list=[]
+    result_query_list=[]
     if(request.method =='GET'):
         action=request.args.get('act')
     else:
         action=request.form['act']
     con=engine.connect()
     if(int(action)<5 or int(action) >7):
-        query_list=[]
-        result_query_list=[]
-        query=""
         if (action=="0"):
             page="search.html"
         elif (action=="1"):
-            page="insertBox.html"
-            query="SELECT RoomID,RoomName from Room"
-            query_list.append(query)
+            page,query_list=load_insert_box()
         elif (action=="2"):
             page="insertRoom.html"
         elif (action=="3"):
-            page="insertObject.html"
-            query= "SELECT ObjectId,ObjectName from Objects"
-            query_list.append(query)
-            query="SELECT ROOMID, COUNT(DISTINCT BOXID)\
-                   FROM BOXES\
-                   GROUP BY ROOMID"
-            query_list.append(query)
-            query="SELECT RoomID,RoomName from Room"
-            query_list.append(query)
+            page,query_list=load_insert_object()
         elif (action=="4"):
             page="createObject.html"
         if (len(query_list)>0):
+            result_query_list=[]
             for q in query_list:
                 result=con.execute(q)
                 result_query_list.append(result)
@@ -184,5 +200,33 @@ def redirect():
         redirect=request.args.get('redirect')
     else:
         redirect=request.form['redirect']
-    return render_template(redirect)
+    if(redirect=="insertBox.html"):
+        page,query_list=load_insert_box()
+    elif (redirect=="insertObject.html"):
+        page,query_list=load_insert_object()
+    con=engine.connect()
+    result_query_list=[]
+    for q in query_list:
+                result=con.execute(q)
+                result_query_list.append(result)
+    return render_template(redirect,results=result_query_list)
+@app.route("/sendBoxOption",methods=["GET","POST"])
+def test():
+    if request.method == "POST":
+        jsonData = request.get_json()
+        print("RoomID:",jsonData['RoomID'])
+        con=engine.connect()
+        query=f"SELECT BoxId,Position\
+                 FROM BOXES\
+                 WHERE ROOMID={jsonData['RoomID']}"
+        boxes=con.execute(query)
+        boxes_headers=boxes.keys()
+        con.close()
+        json_data=[]
+        for result in boxes:
+            print(dict(result))
+            json_data.append(dict(result))
+        return json.dumps(json_data)
+        return json.dumps(list(boxes.fetchall()))
 app.run(debug=True)
+
