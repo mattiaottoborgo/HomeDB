@@ -31,7 +31,13 @@ def load_insert_object():
     query="SELECT RoomID,RoomName from Room"
     query_list.append(query)
     return page,query_list
-
+def load_search():
+    page="search.html"
+    query_list=[]
+    query="SELECT ObjectId,ObjectName\
+           FROM objects"
+    query_list.append(query)
+    return page,query_list
 
 
 
@@ -158,7 +164,7 @@ def selectAct():
     con=engine.connect()
     if(int(action)<5 or int(action) >7):
         if (action=="0"):
-            page="search.html"
+            page,query_list=load_search()
         elif (action=="1"):
             page,query_list=load_insert_box()
         elif (action=="2"):
@@ -227,6 +233,21 @@ def test():
             print(dict(result))
             json_data.append(dict(result))
         return json.dumps(json_data)
-        return json.dumps(list(boxes.fetchall()))
+@app.route("/searchObject",methods=["GET","POST"])
+def searchObject():
+    if(request.method =='POST'):
+        jsonData = request.get_json()
+        ObjectID=jsonData['ObjectID']
+    con=engine.connect()
+    query=f"SELECT boxes.BoxId,Position,RoomName\
+            FROM boxes,inside,room\
+            WHERE boxes.RoomID=room.RoomID and boxes.BoxId=inside.BoxId and ObjectId={ObjectID}"
+    results=con.execute(query)
+    con.close()
+    json_data=[]
+    for result in results:
+        print(dict(result))
+        json_data.append(dict(result))
+    return json.dumps(json_data)
 app.run(debug=True)
 

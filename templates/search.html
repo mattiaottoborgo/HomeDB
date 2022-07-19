@@ -1,0 +1,106 @@
+<html>
+<head>
+
+    <style>
+        table, td, th {
+          border: 1px solid black;
+        }
+        
+        table {
+          border-collapse: collapse;
+          width: 50%;
+        }
+        
+        th {
+          text-align: center;
+        }
+        </style>
+</head>
+<title>
+Search
+</title>
+
+<body>
+<h1>Search an object</h1>
+</body>
+<form  name="Search Object" method="get" action="/searchObject"></form>
+<table>
+    <label>Select an Object(ObjectID):</label>
+        <input list="Objectlist" name="ObjectID" id="SelectObjectID"/>
+        <datalist id="Objectlist">
+            {%for row in results[0]%}
+          <option value="{{row['ObjectId']}}">{{row['ObjectId']}} - {{row['ObjectName']}}</option>
+            {%endfor%}
+        </datalist>
+</table>
+<button onclick="searchObject()">Search</button>
+<table id="ResultTable">
+<tr>
+    <td>Box ID</td><td>Position</td><td>Room</td>   
+</tr>
+
+
+</table>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+<script>
+function updateObjectList(){
+    var ObjectID = document.getElementById('SelectObjectID').value;
+    console.log(ObjectID);
+}
+
+function searchObject(selectRoom){
+    var ObjectID = document.getElementById('SelectObjectID').value;
+        fetch('/searchObject', {
+        headers : {
+            'Content-Type' : 'application/json'
+        },
+        method : 'POST',
+        body : JSON.stringify( {
+            'ObjectID' : ObjectID
+        })
+    })
+    .then(function (response){
+
+        if(response.ok) {
+            response.json()
+            .then(function(response) {
+                console.log(response);
+                var table=document.getElementById('ResultTable')
+                var x = table.rows.length;
+                console.log(x);
+                for(j=0;j<x;j++) {
+                    if (j>0)
+                    table.deleteRow(j);
+                }
+                var table=document.getElementById('ResultTable')
+                for(i=0;i<Object.keys(response).length;i++){
+                    var row = table.insertRow(i+1),
+                    cell1 = row.insertCell(0),
+                    cell2 = row.insertCell(1),
+                    cell3 = row.insertCell(2);
+
+                    cell1.innerHTML = response[i]['BoxId'];
+                    cell2.innerHTML = response[i]['Position'];
+                    cell3.innerHTML = response[i]['RoomName'];
+
+                }
+
+                
+            });
+        }
+        else {
+            throw Error('Something went wrong');
+        }
+    })
+    .catch(function(error) {
+        console.log(error);
+    });
+    }
+
+
+$('input').on('input', updateObjectList);
+
+</script>
+
+</html>
